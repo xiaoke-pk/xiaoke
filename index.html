@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="format-detection" content="telephone=no">
+    <title>无限数据鉴权系统</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; }
+        :root { color-scheme: light; }
+        body {
+            display: block;
+            padding: 0;
+            background: #f5f7fb;
+            color: #0f172a;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            min-height: 100vh;
+            min-height: 100dvh;
+            -webkit-text-size-adjust: 100%;
+            overflow-x: hidden;
+        }
+        .site-header {
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 clamp(20px, 6vw, 92px);
+            background: rgba(255,255,255,.94);
+            border-bottom: 1px solid #e8edf5;
+            box-shadow: 0 1px 8px rgba(15,23,42,.03);
+        }
+        .brand { display: flex; align-items: center; gap: 11px; color: #0f172a; font-weight: 750; letter-spacing: 0; }
+        .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: #2563eb; color: white; font-weight: 800; font-size: 15px; box-shadow: 0 5px 12px rgba(37,99,235,.22); }
+        .brand-name { font-size: 16px; }
+        .site-nav { display: flex; align-items: center; gap: 24px; color: #64748b; font-size: 13px; }
+        .site-nav span:first-child { color: #2563eb; font-weight: 650; }
+        .page-shell { min-height: calc(100vh - 68px); padding: clamp(42px, 9vh, 92px) 20px 54px; }
+        .card {
+            width: min(100%, 560px);
+            margin: 0 auto;
+            padding: 42px clamp(24px, 5vw, 52px) 30px;
+            background: #fff;
+            border: 1px solid #e5eaf2;
+            border-radius: 16px;
+            box-shadow: 0 18px 45px rgba(30, 64, 175, .08);
+        }
+        .logo { width: 58px; height: 58px; margin: 0 auto 18px; border-radius: 15px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; }
+        h1 { color: #0f172a; font-size: clamp(23px, 4vw, 29px); letter-spacing: 0; text-align: center; font-weight: 750; }
+        .sub { margin: 9px 0 34px; color: #94a3b8; font-size: 13px; letter-spacing: 0; text-align: center; }
+        label { display: block; color: #334155; font-size: 13px; font-weight: 650; letter-spacing: 0; margin-bottom: 9px; }
+        .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; padding: 4px; border: 1px solid #e5eaf2; border-radius: 10px; background: #f8fafc; }
+        .mode-btn { min-width: 0; min-height: 38px; padding: 9px 12px; border: 0; border-radius: 7px; color: #64748b; background: transparent; box-shadow: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: .15s; }
+        .mode-btn:hover { color: #2563eb; background: #eff6ff; }
+        .mode-btn.active { color: #1d4ed8; background: #fff; box-shadow: 0 2px 7px rgba(15,23,42,.08); }
+        .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        input {
+            min-width: 0;
+            flex: 1;
+            padding: 13px 14px;
+            color: #0f172a;
+            background: #fff;
+            border: 1px solid #d9e1ec;
+            border-radius: 9px;
+            outline: none;
+            font-size: 14px;
+            letter-spacing: .5px;
+            font-family: Consolas, ui-monospace, monospace;
+            transition: .15s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        input::placeholder { color: #a3afbf; }
+        input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96,165,250,.16); }
+        button {
+            min-width: 96px;
+            padding: 13px 20px;
+            border: 0;
+            border-radius: 9px;
+            color: #fff;
+            background: #2563eb;
+            box-shadow: 0 7px 14px rgba(37,99,235,.2);
+            font-size: 14px;
+            font-weight: 650;
+            letter-spacing: 0;
+            cursor: pointer;
+            transition: .15s;
+            white-space: nowrap;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        button:hover { background: #1d4ed8; box-shadow: 0 9px 18px rgba(37,99,235,.24); }
+        button:active { transform: scale(.97); }
+        button:disabled { background: #93b4f5; box-shadow: none; cursor: not-allowed; }
+        .hd-btn { color: #fff; background: #7c3aed; box-shadow: 0 7px 14px rgba(124,58,237,.22); }
+        .hd-btn:hover { background: #6d28d9; box-shadow: 0 9px 18px rgba(124,58,237,.26); }
+
+        .result { margin-top: 20px; display: none; }
+        .result.show { display: block; animation: slideUp .3s ease forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+        .alert {
+            padding: 14px 16px;
+            border-radius: 9px;
+            font-size: 13px;
+            line-height: 1.5;
+            word-break: break-word;
+            border-left-width: 3px;
+            border-left-style: solid;
+            letter-spacing: 0;
+        }
+        .alert.error { background: #fff1f2; color: #be123c; border-color: #fb7185; }
+        .alert.success { background: #ecfdf5; color: #047857; border-color: #34d399; }
+
+        .field { margin-top: 18px; }
+        .field-label { font-size: 12px; color: #475569; letter-spacing: 0; margin-bottom: 8px; }
+        .token-box {
+            position: relative;
+            background: #f8fafc;
+            color: #334155;
+            border: 1px solid #dbe4ef;
+            border-radius: 9px;
+            font-family: Consolas, ui-monospace, monospace;
+            font-size: 12.5px;
+            padding: 16px;
+            word-break: break-all;
+            line-height: 1.6;
+            max-height: 240px;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .copy-btn {
+            margin-top: 12px;
+            width: 100%;
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+            font-size: 14px;
+            box-shadow: none;
+        }
+        .copy-btn:hover { color: #1d4ed8; background: #dbeafe; box-shadow: none; }
+        .hd-ini-box { width: 100%; min-height: 360px; max-height: 70vh; resize: vertical; white-space: pre; overflow: auto; }
+        .hd-actions { display: flex; gap: 10px; }
+        .hd-actions .copy-btn { flex: 1; }
+
+        /* ============ 授权数据展示 ============ */
+        .auth-panel {
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid #dbe4ef;
+            display: none;
+        }
+        .auth-panel.show { display: block; animation: slideUp .3s ease; }
+        .auth-panel-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 13px;
+            font-weight: 750;
+            color: #0f172a;
+            margin-bottom: 12px;
+        }
+        .auth-panel-title::before {
+            content: "";
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+        }
+        .auth-item { margin-bottom: 12px; }
+        .auth-item:last-child { margin-bottom: 0; }
+        .auth-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 700;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .auth-value {
+            display: block;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-family: Consolas, ui-monospace, monospace;
+            font-size: 12px;
+            color: #1e293b;
+            word-break: break-all;
+            user-select: all;
+            -webkit-user-select: all;
+            line-height: 1.5;
+        }
+        .auth-copy {
+            margin-top: 10px;
+            width: 100%;
+            padding: 11px 0;
+            border: 0;
+            border-radius: 9px;
+            background: #ecfdf5;
+            color: #047857;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .15s;
+        }
+        .auth-copy:hover { background: #d1fae5; }
+        .auth-copy.done { background: #22c55e; color: #fff; }
+
+        .history { margin-top: 16px; border: 1px solid #e5eaf2; border-radius: 10px; background: #f8fafc; padding: 12px; display: none; }
+        .history.show { display: block; }
+        .history-title { color: #64748b; font-size: 12px; margin-bottom: 10px; letter-spacing: 0; }
+        .history-list { display: flex; flex-direction: column; gap: 8px; }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border: 1px solid #e5eaf2;
+            border-radius: 8px;
+            color: #334155;
+            background: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: .15s;
+        }
+        .history-item:hover { border-color: #93c5fd; background: #eff6ff; }
+        .history-time { color: #94a3b8; }
+        .history-view { color: #2563eb; font-weight: 600; }
+
+        .history-results { margin-top: 14px; border: 1px solid #e5eaf2; border-radius: 10px; background: #fff; overflow: hidden; }
+        .history-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 10px 12px; border-bottom: 1px solid #e5eaf2; background: #f8fafc; color: #64748b; font-size: 12px; }
+        .history-toolbar > span { min-width: 0; overflow-wrap: anywhere; }
+        .history-toolbar .copy-btn { width: auto; min-width: 92px; margin: 0; padding: 8px 12px; font-size: 12px; }
+        .history-record { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; margin: 0; padding: 10px 12px; border-bottom: 1px solid #eef2f7; color: #334155; }
+        .history-record:last-child { border-bottom: 0; }
+        .history-record input[type="checkbox"] { width: 16px; height: 16px; min-width: 16px; margin: 0; padding: 0; flex: none; accent-color: #2563eb; cursor: pointer; }
+        .history-record-content { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-width: 0; margin: 0; color: #334155; font-size: 12px; cursor: pointer; }
+        .history-record-token { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: Consolas, monospace; }
+        .history-record-date { display: block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #2563eb; font-weight: 650; text-align: right; }
+        .footer { margin-top: 28px; color: #94a3b8; letter-spacing: 0; text-transform: none; text-align: center; font-size: 11px; }
+
+        @media (max-width: 560px) {
+            .site-header { height: 60px; padding: 0 18px; }
+            .site-nav { gap: 12px; font-size: 12px; }
+            .page-shell { min-height: calc(100vh - 60px); padding: 28px 14px 34px; }
+            .card { padding: 30px 20px 24px; border-radius: 14px; }
+            .input-row { flex-direction: column; }
+            input, button { width: 100%; }
+            .hd-actions { flex-direction: column; gap: 0; }
+            .history-toolbar { align-items: flex-start; }
+            .history-toolbar .copy-btn { flex: 0 0 auto; width: auto; }
+            .history-record-date { max-width: 104px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="brand"><div class="brand-mark">∞</div><div class="brand-name">无限数据鉴权系统</div></div>
+        <nav class="site-nav"><span>首页</span><span>安全鉴权</span></nav>
+    </header>
+    <main class="page-shell">
+        <div class="card">
+            <div class="logo">GZ</div>
+            <h1>无限数据鉴权系统</h1>
+            <p class="sub">安全、快速、稳定的数据授权服务</p>
+
+            <label for="card">访问密钥 [卡密]</label>
+            <div class="mode-switch" role="group" aria-label="提取模式">
+                <button type="button" class="mode-btn active" data-mode="fresh">获取新数据</button>
+                <button type="button" class="mode-btn" data-mode="cached">读取历史数据</button>
+            </div>
+            <div class="input-row">
+                <input id="card" type="text" placeholder="输入卡密" maxlength="120" autocomplete="off" spellcheck="false">
+                <button id="queryBtn" onclick="query()">获取新数据</button>
+                <button id="hdBtn" class="hd-btn" type="button" onclick="query(true)">提取高清版</button>
+            </div>
+            <div id="history" class="history"></div>
+            <div id="result" class="result"></div>
+
+            <div class="footer">© 2026 无限数据鉴权系统 · 安全连接</div>
+        </div>
+    </main>
+
+    <script>
+        "use strict";
+
+        // ★★★ 后端 Worker 地址（末尾不要带斜杠） ★★★
+        const API_BASE = 'https://xiaoke.xiaokettkx.workers.dev';
+
+        // ==================== DOM 引用 ====================
+        const cardInput  = document.getElementById('card');
+        const btn        = document.getElementById('queryBtn');
+        const hdBtn      = document.getElementById('hdBtn');
+        const resultBox  = document.getElementById('result');
+        const historyBox = document.getElementById('history');
+        const modeButtons = Array.from(document.querySelectorAll('.mode-btn'));
+
+        // ==================== 常量 ====================
+        const CLIENT_ID_KEY = 'gz_client_id';
+        const DEVICE_ID_KEY = 'gz_device_id';
+        const HISTORY_KEY   = 'gz_query_history_v2_enc';
+        const HISTORY_CRYPTO_SALT = 'GZ-LOCAL-HISTORY-20260612-V2';
+        const HISTORY_TTL_MS    = 0;
+        const QUERY_COOLDOWN_MS = 0;
+        const CACHE_COOLDOWN_MS = 0;
+
+        // ==================== 状态 ====================
+        let queryMode     = 'fresh';
+        let lastQueryAt   = 0;
+        let cooldownTimer = null;
+        let queryInFlight = false;
+
+        // ==================== 客户端 ID ====================
+        let CLIENT_ID = localStorage.getItem(CLIENT_ID_KEY);
+        if (!CLIENT_ID) {
+            CLIENT_ID = (window.crypto && crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random()).replace('.', ''));
+            localStorage.setItem(CLIENT_ID_KEY, CLIENT_ID);
+        }
+
+        // ==================== 设备 ID（后端要求 WEB- 前缀 + 32 位十六进制） ====================
+        let DEVICE_ID = localStorage.getItem(DEVICE_ID_KEY);
+        if (!DEVICE_ID || !/^WEB-[0-9A-F]{32}$/.test(DEVICE_ID)) {
+            const buf = new Uint8Array(16);
+            if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(buf);
+            else for (let i = 0; i < 16; i++) buf[i] = Math.floor(Math.random() * 256);
+            DEVICE_ID = 'WEB-' + Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+            localStorage.setItem(DEVICE_ID_KEY, DEVICE_ID);
+        }
+
+        // ==================== 工具函数 ====================
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            }[c]));
+        }
+        function bytesToB64(bytes) {
+            let s = '';
+            bytes.forEach(b => s += String.fromCharCode(b));
+            return btoa(s);
+        }
+        function b64ToBytes(s) {
+            return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+        }
+        function randomBytes(len) {
+            const out = new Uint8Array(len);
+            if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(out);
+            else for (let i = 0; i < len; i++) out[i] = Math.floor(Math.random() * 256);
+            return out;
+        }
+        async function copyTextCompat(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+            }
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '0';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            ta.setSelectionRange(0, ta.value.length);
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            document.body.removeChild(ta);
+            return ok;
+        }
+        function extractCard(input) {
+            return String(input || '').trim().toUpperCase().replace(/\s+/g, '');
+        }
+
+        // ==================== 本地历史加密（AES-GCM，仅用于本机缓存） ====================
+        function supportsLocalHistoryCrypto() {
+            return !!(window.crypto && crypto.subtle && crypto.getRandomValues && window.TextEncoder && window.TextDecoder);
+        }
+        async function getHistoryCryptoKey() {
+            const enc = new TextEncoder().encode(HISTORY_CRYPTO_SALT + '|' + CLIENT_ID + '|' + location.host);
+            const digest = await crypto.subtle.digest('SHA-256', enc);
+            return crypto.subtle.importKey('raw', digest, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+        }
+        async function encryptHistoryList(list) {
+            if (!supportsLocalHistoryCrypto()) return null;
+            const iv = randomBytes(12);
+            const key = await getHistoryCryptoKey();
+            const plain = new TextEncoder().encode(JSON.stringify(list));
+            const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain));
+            return JSON.stringify({ v: 2, iv: bytesToB64(iv), data: bytesToB64(cipher) });
+        }
+        async function decryptHistoryList(raw) {
+            if (!raw || !supportsLocalHistoryCrypto()) return [];
+            try {
+                const box = JSON.parse(raw);
+                if (!box || box.v !== 2 || !box.iv || !box.data) return [];
+                const key = await getHistoryCryptoKey();
+                const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(box.iv) }, key, b64ToBytes(box.data));
+                const list = JSON.parse(new TextDecoder().decode(plain));
+                return Array.isArray(list) ? list : [];
+            } catch (e) {
+                return [];
+            }
+        }
+        async function readHistory() {
+            const cutoff = HISTORY_TTL_MS > 0 ? Date.now() - HISTORY_TTL_MS : 0;
+            let list = await decryptHistoryList(localStorage.getItem(HISTORY_KEY) || '');
+            list = Array.isArray(list) ? list.filter(x => x && x.card && x.data && x.ts >= cutoff) : [];
+            await writeHistory(list.slice(0, 30));
+            return list.slice(0, 30);
+        }
+        async function writeHistory(list) {
+            const raw = await encryptHistoryList(list);
+            if (raw) localStorage.setItem(HISTORY_KEY, raw);
+            else localStorage.removeItem(HISTORY_KEY);
+        }
+        async function saveHistory(card, data) {
+            if (!data || !data.token) return;
+            const list = (await readHistory()).filter(x => x.card !== card);
+            list.unshift({ card, data: { token: String(data.token || ''), auth: data.auth || null }, ts: Date.now() });
+            await writeHistory(list.slice(0, 30));
+            await renderHistory();
+        }
+        function formatHistoryTime(ts) {
+            const d = new Date(ts);
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+        async function renderHistory() {
+            const list = await readHistory();
+            if (!list.length) {
+                historyBox.className = 'history';
+                historyBox.innerHTML = '';
+                return;
+            }
+            historyBox.className = 'history show';
+            historyBox.innerHTML = `<div class="history-title">成功查询记录 / 本地永久保留</div><div class="history-list">${
+                list.map(x => `<div class="history-item" data-card="${escapeHtml(x.card)}"><span>${escapeHtml(x.card)}</span><span><span class="history-time">${escapeHtml(formatHistoryTime(x.ts))}</span> <span class="history-view">查看</span></span></div>`).join('')
+            }</div>`;
+        }
+        historyBox.addEventListener('click', async e => {
+            const item = e.target.closest('.history-item');
+            if (!item) return;
+            await pickHistory(item.dataset.card || '');
+        });
+        async function pickHistory(card) {
+            cardInput.value = card;
+            cardInput.focus();
+            const item = (await readHistory()).find(x => x.card === card);
+            if (item && item.data) showSuccess(item.data);
+        }
+
+        // ==================== 结果渲染 ====================
+        function showError(msg) {
+            resultBox.className = 'result show';
+            resultBox.innerHTML = `<div class="alert error">${escapeHtml(msg)}</div>`;
+        }
+
+        // 展示三段授权数据
+        function renderAuthPanel(auth) {
+            if (!auth) return '';
+            const at = auth.access_token || '';
+            const oid = auth.openid || '';
+            const pt  = auth.pay_token || '';
+            if (!at && !oid && !pt) return '';
+            return `
+                <div class="auth-panel show">
+                    <div class="auth-panel-title">授权数据</div>
+                    <div class="auth-item">
+                        <span class="auth-label">access_token</span>
+                        <span class="auth-value" id="authAccessToken">${escapeHtml(at || '-')}</span>
+                    </div>
+                    <div class="auth-item">
+                        <span class="auth-label">openid</span>
+                        <span class="auth-value" id="authOpenid">${escapeHtml(oid || '-')}</span>
+                    </div>
+                    <div class="auth-item">
+                        <span class="auth-label">pay_token</span>
+                        <span class="auth-value" id="authPayToken">${escapeHtml(pt || '-')}</span>
+                    </div>
+                    <button class="auth-copy" type="button" onclick="copyAuth()">复制完整授权数据</button>
+                </div>`;
+        }
+
+        function showSuccess(d) {
+            const sourceLabel = d.cached ? '已从数据库缓存读取' : '获取新数据成功';
+            resultBox.className = 'result show';
+            resultBox.innerHTML = `
+                <div class="alert success">[系统提示] ${sourceLabel}</div>
+                <div class="field">
+                    <div class="field-label">登录票据 (ACCESS_TOKEN)</div>
+                    <div class="token-box" id="tokenBox">${escapeHtml(d.token || '')}</div>
+                    <button class="copy-btn" type="button" onclick="copyToken()">复制票据内容</button>
+                </div>
+                ${renderAuthPanel(d.auth)}`;
+        }
+
+        function showHdSuccess(d) {
+            const content = String(d.hd_ini || '');
+            if (!content) { showError('当前返回不支持高清版 ini'); return; }
+            resultBox.className = 'result show';
+            resultBox.innerHTML = `
+                <div class="alert success">[系统提示] 高清版 ini 提取成功，可完整复制或下载</div>
+                <div class="field">
+                    <div class="field-label">高清版 ini 内容</div>
+                    <textarea class="token-box hd-ini-box" id="hdIniBox" readonly spellcheck="false">${escapeHtml(content)}</textarea>
+                    <div class="hd-actions">
+                        <button class="copy-btn" type="button" onclick="copyHdIni()">复制完整内容</button>
+                        <button class="copy-btn" type="button" onclick="downloadHdIni()">下载 ${escapeHtml(d.hd_filename || 'account.ini')}</button>
+                    </div>
+                </div>`;
+        }
+
+        function showHistoryResults(d) {
+            const rows = Array.isArray(d.history) ? d.history.filter(item => item && item.token) : [];
+            if (!rows.length) { showSuccess(d); return; }
+            resultBox.className = 'result show';
+            resultBox.innerHTML = `
+                <div class="alert success">[系统提示] 已读取数据库历史记录，共 ${rows.length} 条</div>
+                <div class="history-results">
+                    <div class="history-toolbar">
+                        <span>勾选需要复制的记录</span>
+                        <button class="copy-btn" type="button" onclick="copySelectedHistory()">复制选中</button>
+                    </div>
+                    ${rows.map((item, index) => `
+                        <div class="history-record">
+                            <input id="historyCheck_${index}" type="checkbox" class="history-record-check" data-token="${escapeHtml(item.token)}" aria-label="选择第 ${rows.length - index} 条记录">
+                            <label class="history-record-content" for="historyCheck_${index}" title="${escapeHtml(item.token)}">
+                                <span class="history-record-token">${escapeHtml(item.token)}</span>
+                                <span class="history-record-date">${escapeHtml(item.fetched_at || item.cached_at || '时间未知')}</span>
+                            </label>
+                        </div>`).join('')}
+                </div>
+                ${renderAuthPanel(d.auth)}`;
+        }
+
+        // ==================== 复制 ====================
+        async function copyToken() {
+            const el = document.getElementById('tokenBox');
+            if (!el) return;
+            const t = el.innerText;
+            const b = document.querySelector('.field .copy-btn');
+            const old = b ? b.innerText : '';
+            const ok = await copyTextCompat(t);
+            if (b) {
+                b.innerText = ok ? '已复制 ✓' : '复制失败，请长按手动复制';
+                setTimeout(() => b.innerText = old, 1800);
+            }
+        }
+        
+        // ★★★ 已修改：使用 & 连接，并在末尾加上 & ★★★
+        async function copyAuth() {
+            const at = (document.getElementById('authAccessToken') || {}).innerText || '';
+            const oid = (document.getElementById('authOpenid') || {}).innerText || '';
+            const pt = (document.getElementById('authPayToken') || {}).innerText || '';
+            const text = `access_token=${at}&openid=${oid}&pay_token=${pt}&`;
+            const button = document.querySelector('.auth-copy');
+            const ok = await copyTextCompat(text);
+            if (button) {
+                const old = button.innerText;
+                button.innerText = ok ? '已复制 ✓' : '复制失败，请长按手动复制';
+                button.classList.toggle('done', !!ok);
+                setTimeout(() => { button.innerText = old; button.classList.remove('done'); }, 1800);
+            }
+        }
+        
+        async function copyHdIni() {
+            const box = document.getElementById('hdIniBox');
+            const button = document.querySelector('.hd-actions .copy-btn');
+            const ok = await copyTextCompat(box ? box.value : '');
+            if (button) {
+                const old = button.innerText;
+                button.innerText = ok ? '已复制 ✓' : '复制失败，请手动复制';
+                setTimeout(() => button.innerText = old, 1800);
+            }
+        }
+        function downloadHdIni() {
+            const box = document.getElementById('hdIniBox');
+            if (!box || !box.value) return;
+            const name = (window.__hdFilename || 'account.ini').replace(/[^\w.-]/g, '_');
+            const utf8 = new TextEncoder().encode(box.value);
+            const marker = new TextEncoder().encode('三角洲');
+            const gbk = new Uint8Array([0xC8, 0xFD, 0xBD, 0xC7, 0xD6, 0xDE]);
+            const bytes = [];
+            for (let i = 0; i < utf8.length;) {
+                let hit = i + marker.length <= utf8.length;
+                for (let j = 0; hit && j < marker.length; j++) hit = utf8[i + j] === marker[j];
+                if (hit) { bytes.push(...gbk); i += marker.length; }
+                else { bytes.push(utf8[i++]); }
+            }
+            const blob = new Blob([new Uint8Array(bytes)], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+        }
+        async function copySelectedHistory() {
+            const selected = Array.from(document.querySelectorAll('.history-record-check:checked'));
+            if (!selected.length) { showError('请先勾选需要复制的历史记录'); return; }
+            const text = selected.map(box => box.dataset.token || '').filter(Boolean).join('\n');
+            const button = document.querySelector('.history-toolbar .copy-btn');
+            const ok = await copyTextCompat(text);
+            if (button) {
+                const old = button.innerText;
+                button.innerText = ok ? '已复制' : '复制失败';
+                setTimeout(() => button.innerText = old, 1800);
+            }
+        }
+
+        // ==================== 模式切换 ====================
+        function setQueryMode(mode) {
+            queryMode = mode === 'cached' ? 'cached' : 'fresh';
+            modeButtons.forEach(b => b.classList.toggle('active', b.dataset.mode === queryMode));
+            btn.innerText = queryMode === 'cached' ? '读取缓存' : '获取新数据';
+            resultBox.className = 'result';
+            resultBox.innerHTML = '';
+        }
+        modeButtons.forEach(b => b.addEventListener('click', () => setQueryMode(b.dataset.mode)));
+        cardInput.addEventListener('keydown', e => { if (e.key === 'Enter') query(); });
+
+        // ==================== 冷却 ====================
+        function startCooldown(duration) {
+            clearInterval(cooldownTimer);
+            if (!duration || duration <= 0) {
+                cooldownTimer = null;
+                btn.disabled = !!queryInFlight;
+                return;
+            }
+            const endAt = Date.now() + duration;
+            btn.disabled = true;
+            const tick = () => {
+                const left = Math.ceil((endAt - Date.now()) / 1000);
+                if (left <= 0) {
+                    clearInterval(cooldownTimer);
+                    cooldownTimer = null;
+                    if (!queryInFlight) {
+                        btn.disabled = false;
+                        btn.innerText = queryMode === 'cached' ? '读取缓存' : '获取新数据';
+                    }
+                    return;
+                }
+                btn.innerText = `${left}s`;
+            };
+            tick();
+            cooldownTimer = setInterval(tick, 250);
+        }
+
+        // ==================== 核心查询 ====================
+        async function query(highQuality = false) {
+            if (queryInFlight || cooldownTimer) return;
+            const card = extractCard(cardInput.value);
+            if (!card) { showError('[错误] 密钥不能为空'); return; }
+            if (card.length > 120) { showError('[错误] 卡密输入有误，请检查'); return; }
+            cardInput.value = card;
+
+            const nowTime = Date.now();
+            const requestMode = highQuality ? 'fresh' : queryMode;
+            const cooldownMs = requestMode === 'cached' ? CACHE_COOLDOWN_MS : QUERY_COOLDOWN_MS;
+            const waitMs = cooldownMs - (nowTime - lastQueryAt);
+            if (waitMs > 0) {
+                showError(`[拦截] 请求过于频繁，请 ${Math.ceil(waitMs / 1000)} 秒后再试`);
+                return;
+            }
+            lastQueryAt = nowTime;
+
+            queryInFlight = true;
+            if (hdBtn) hdBtn.disabled = true;
+            startCooldown(cooldownMs);
+
+            try {
+                const resp = await fetch(API_BASE + '/api/query', {
+                    method: 'POST',
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Client-Id': CLIENT_ID
+                    },
+                    body: JSON.stringify({
+                        card: card,
+                        device_id: DEVICE_ID,
+                        mode: requestMode,
+                        format: highQuality ? 'hd_ini' : 'token'
+                    })
+                });
+                const json = await resp.json();
+
+                if (json.ok) {
+                    void saveHistory(card, json.data).catch(() => {});
+                    if (highQuality) {
+                        window.__hdFilename = json.data.hd_filename || `${card}.ini`;
+                        showHdSuccess(json.data);
+                    } else if (requestMode === 'cached') {
+                        showHistoryResults(json.data);
+                    } else {
+                        showSuccess(json.data);
+                    }
+                } else {
+                    showError('[拦截] ' + (json.msg || '未知错误'));
+                }
+            } catch (e) {
+                showError('[系统异常] ' + (e.message || e));
+            } finally {
+                queryInFlight = false;
+                if (hdBtn) hdBtn.disabled = false;
+                if (!cooldownTimer) {
+                    btn.disabled = false;
+                    btn.innerText = queryMode === 'cached' ? '读取缓存' : '获取新数据';
+                }
+            }
+        }
+
+        // ==================== 启动 ====================
+        renderHistory();
+    </script>
+</body>
+</html>
